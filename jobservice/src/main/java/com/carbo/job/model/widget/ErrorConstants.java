@@ -1,0 +1,43 @@
+package com.carbo.job.model.widget;
+
+public class ErrorConstants {
+    public static final String UNABLE_TO_FETCH_PROPPANT_PLACED_DATA_CODE = "UNABLE_TO_FETCH_PROPPANT_PLACED_DATA";
+    public static final String UNABLE_TO_FETCH_PROPPANT_PLACED_DATA_MESSAGE = "Unable to fetch proppant placed data";
+    public static final String WELL_ID_IS_MANDATORY_CODE = "WELL_ID_IS_MANDATORY";
+    public static final String WELL_ID_IS_MANDATORY_MESSAGE = "wellId is mandatory";
+    public static final String JOB_NOT_FOUND_CODE = "JOB_NOT_FOUND";
+    public static final String JOB_NOT_FOUND_MESSAGE = "job not found for given id";
+    public static final String UNABLE_TO_FETCH_CHEMICAL_PLOT_DATA_CODE = "UNABLE_TO_FETCH_CHEMICAL_PLOT_DATA";
+    public static final String UNABLE_TO_FETCH_CHEMICAL_PLOT_DATA_MESSAGE = "unable to fetch chemical plot data";
+    public static final String UNABLE_TO_FETCH_CHEMICAL_COST_TRACKING_DATA_CODE = "UNABLE_TO_FETCH_CHEMICAL_COST_TRACKING_DATA";
+    public static final String UNABLE_TO_FETCH_CHEMICAL_COST_TRACKING_DATA_MESSAGE = "Unable to fetch chemical cost tracking data";
+    public static final String CHEMICAL_STAGE_DATA_NOT_FOUND_CODE = "CHEMICAL_STAGE_DATA_NOT_FOUND";
+    public static final String CHEMICAL_STAGE_DATA_NOT_FOUND_MESSAGE = "Chemical Stage data not found for given job";
+    public static final String PROPPANT_STAGE_DATA_NOT_FOUND_CODE = "PROPPANT_STAGE_DATA_NOT_FOUND";
+    public static final String PROPPANT_STAGE_DATA_NOT_FOUND_MESSAGE = "PROPPANT Stage data not found for given job";
+    public static final String CHEMICAL_LIST_DATA_NOT_FOUND_CODE = "CHEMICAL_LIST_DATA_NOT_FOUND";
+    public static final String CHEMICAL_LIST_DATA_NOT_FOUND_MESSAGE = "Chemical List data not found for given organizationId";
+    public static final String ERROR_WHILE_CALCULATING_DATA_CODE = "ERROR_WHILE_CALCULATING_DATA";
+    public static final String ERROR_WHILE_CALCULATING_DATA_MESSAGE = "error while calculating.";
+    public static final String ERROR_WHILE_FETCHING_GRAPH_DATA_CODE = "ERROR_WHILE_FETCHING_GRAPH_DATA";
+    public static final String ERROR_WHILE_FETCHING_GRAPH_DATA_MESSAGE = "Error while fetching the graph data";
+    public static final String ERROR_WHILE_FETCHING_ACTIVITY_LOG_DATA_CODE = "ERROR_WHILE_FETCHING_ACTIVITY_LOG_DATA_CODE";
+    public static final String ERROR_WHILE_FETCHING_ACTIVITY_LOG_DATA_MESSAGE = "Error while fetching activity log data";
+    public static final String SWAP_OVER_TIME = "swapOverTime";
+    public static final String TAREGT_PUMP_HOURS = "targetPumpHours";
+    public static final String STAGE_PER_DAY = "stagePerDay";
+    public static final String PUMP_TIME = "Pump Time";
+    public static final String WELL_SWAP = "Well Swap";
+    public static final String WELLSWAP = "Wellswap";
+    public static final String WELL_TRANSITION = "Well Transition";
+    public static final String FRAC_TRANSITION_TO_WL = "Frac Transitioning to WL";
+    public static final String WL_TRANSITION_TO_FRAC = "WL Transitioning to Frac";
+    public static final String PLANED_MAINTENANCE = "Planned Maintenance";
+    public static final String PUMP_MAINTENANCE = "Pump Maintenance";
+    public static final String PLANED_WIRELINE = "Wireline";
+    public static final String WIRELINE_RUN = "Wireline Run";
+    public static final String ERROR_WHILE_FETCHING_TIME_TRACKING_DATA_CODE = "ERROR_WHILE_FETCHING_TIME_TRACKING_DATA_CODE";
+    public static final String ERROR_WHILE_FETCHING_TIME_TRACKING_DATA_MESSAGE = "Error while fetching the time tracking data";
+    public static final String ERROR_WHILE_FETCHING_DEFAULT_PRICEBOOK_CODE = "ERROR_WHILE_FETCHING_DEFAULT_PRICEBOOK";
+    public static final String ERROR_WHILE_FETCHING_DEFAULT_PRICEBOOK_MESSAGE = "Error while fetching default priceBook";
+}

@@ -1,0 +1,21 @@
+package com.carbo.job.model.proposal;
+
+public enum ProposalStateEnum {
+    ALL,
+    TO_DO,
+    DRAFT,
+    MANAGEMENT_REVIEW,
+    MANAGEMENT_APPROVED,
+    CLIENT_REVIEW,
+    CLIENT_APPROVED,
+    CLIENT_REJECTED,
+    CLIENT_DECLINED,
+    SCHEDULING,
+    SCHEDULED,
+    OPERATIONS,
+    COMPLETED,
+    CLOSED_LOST,
+    MANAGEMENT_REJECTED,
+    FAVOURITE
+}
+

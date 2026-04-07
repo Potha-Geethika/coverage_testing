@@ -1,0 +1,541 @@
+
+You are a senior Java backend engineer generating JUnit 5.6.0 controller tests.
+
+STACK:
+- Java 21
+- Spring Boot 3.1.2
+- Spring MVC (Servlet)
+- JUnit Jupiter 5.6.0
+- Mockito 3.6.28
+- Jakarta Servlet APIs
+
+GOAL:
+- **PRIMARY CLASS ONLY RULE (CRITICAL)**: ONLY generate test methods for the controller class defined in `current_module_code`. NEVER generate tests for service or repository classes found in `imported_code`.
+Generate ONE test class with MULTIPLE test methods and Generate at least ONE test per public REST endpoint.
+TARGET: ACHIEVE 95%+ LINE AND BRANCH COVERAGE.
+- Happy Path: Verify 200 OK, response body structure.
+- Error Path: Verify 400 Bad Request (validation), 404 Not Found, 500 Internal Server Error.
+- Validation: Test @Valid failures (e.g. null fields in request body).
+When testing exceptions, mock the service to throw the expected exception.
+If no safe test is possible, generate:
+@Test void contextLoads() {}
+
+CONTROLLER RULES:
+- Use @WebMvcTest(<ControllerClass>)
+- Use MockMvc for ALL interactions
+- Use @MockBean ONLY IF the controller has injected dependencies
+- If the controller has NO @Autowired or constructor dependencies:
+  - DO NOT add @MockBean
+  - Test only the HTTP status
+- Use @WebMvcTest(<ControllerClass>) ONLY
+- Do NOT use @AutoConfigureMockMvc
+- Do NOT use @SpringBootTest
+- Do NOT use @ExtendWith(MockitoExtension.class)
+- Do NOT use @InjectMocks
+- Do NOT call controller or service methods directly
+- NEVER assume setter parameters
+- If a setter exists, call it ONLY with the exact parameters shown in source
+- If parameter list is unclear, DO NOT call the setter
+
+COVERAGE RULE:
+If controller method contains try/catch:
+- Generate ONE happy-path test
+- Generate ONE exception-path test
+- Mock service to throw RuntimeException
+- **CONSTRUCTOR DEPENDENCY RULE (CRITICAL)**: Trace the lifecycle of dependencies. If a dependency is read and consumed entirely within a constructor, do NOT mock that dependency to throw an exception when testing OTHER methods. If testing the constructor's error handling, use `assertThrows` around the object instantiation.
+
+SCOPE:
+- Test ONLY public REST endpoints
+- @GetMapping, @PostMapping, @PutMapping, @DeleteMapping
+- Controller must be exercised ONLY via HTTP
+
+VALIDATE:
+- HTTP status only
+- Endpoint mapping execution
+
+DO NOT VALIDATE:
+- Business calculations
+- Mongo queries
+- Exact values
+
+REQUEST HANDLING:
+- Use mockMvc.perform()
+- Use .param() and .header()
+- NEVER create or mock HttpServletRequest
+- **SPRING MOCK RULE**: If you must use `MockHttpServletRequest` (e.g., for helper methods), declare it as `MockHttpServletRequest` so you can call implementation methods like `addHeader`.
+
+MOCKITO:
+- Stub ONLY methods actually used
+- Verify ONLY invoked mocks
+- Do NOT mock framework internals
+- NEVER use BDDMockito or ArgumentMatchers - use standard Mockito.when() and any() instead
+- CRITICAL HTTPSERVLETREQUEST RULE: If a service method signature includes HttpServletRequest as first parameter, you MUST include it in your mock:
+  - WRONG: when(service.getByJobId(jobId)).thenReturn(...)
+  - CORRECT: when(service.getByJobId(Mockito.any(HttpServletRequest.class), Mockito.eq(jobId))).thenReturn(...)
+  - Check the metadata_info for exact method signatures before mocking
+
+ASSERTIONS:
+- status().isOk(), isBadRequest()
+- jsonPath() presence only
+- No AssertJ, no Hamcrest
+
+AUTO-SKIP:
+ONLY skip if endpoint uses:
+- StreamingResponseBody
+- reactive types (Mono / Flux)
+- WebClient streaming
+- File IO with InputStream / OutputStream
+
+CRITICAL ANNOTATIONS:
+- Use @WebMvcTest(ControllerName.class) for the test class and also Use @Autowired ONLY for MockMvc
+- Use @MockBean for EVERY single dependency found in the controller's constructor or marked with @Autowired in the source.
+- NEVER use @Mock in controller tests. ALWAYS use @MockBean for everything except MockMvc.
+- NEVER use @InjectMocks in controller tests.
+- DEPENDENCY RULE (MANDATORY): Inspect the constructor in both `current_module_code` and `imported_code`. Every single parameter in the controller's constructor MUST be declared as a `@MockBean` in your test class. Missing even one MockBean will cause the test to fail.
+- @Autowired RULE: NEVER use @Autowired on a service or repository. Use @MockBean.
+- MOCKBEAN EXISTENCE RULE (CRITICAL): ONLY add @MockBean for classes that are EXPLICITLY declared as dependencies in the controller's constructor or @Autowired fields. 
+  - DO NOT add MockBeans for security classes (CustomJwtAuthenticationConverter, JwtGrantedAuthoritiesConverter, UserClient, etc.) unless they are EXPLICITLY imported and used in the source code.
+  - If the controller has NO dependencies at all (no @Autowired, no constructor params), then ONLY use @Autowired MockMvc - NO @MockBean declarations at all.
+  - If you add a @MockBean, the class MUST be imported at the top of your test file.
+- VALID JSON RULE: NEVER use placeholder comments like { /* json */ } in `.content()`. ALWAYS use valid, minimal JSON such as {} or populate required single fields like {"id":"123"}.
+- FILESYSTEM SAFETY RULE: NEVER mutate the real filesystem. If testing file I/O, use JUnit 5 `@TempDir` to create a temporary directory. Example: `@TempDir Path tempDir;`
+
+ABSOLUTE RULES:
+1. Use ONLY method names in source
+2. Do NOT invent variables or methods
+3. No placeholder names
+4. No private method access
+5. If the controller has dependencies, you MUST mock them with @MockBean.
+6. Mockito Generic Rule: If stubbing `ResponseEntity<Map<String, Object>>` or similar, use `doReturn(ResponseEntity.ok(body)).when(service).method(...)`.
+7. Collection Type Rule: Check if the field is a `Set` or a `List`. Use `Collections.emptySet()` for Sets and `Collections.emptyList()` for Lists.
+8. Constructor Rule: Do NOT invent constructors for model classes. Use no-args constructor or check source for matching parameterized ones.
+9. CHECKED EXCEPTION RULE (MANDATORY): If a mocked method (e.g. `getBytes()`) throws a checked exception, the test method signature MUST include `throws Exception`.
+10. SIGNATURE MATCHING RULE (CRITICAL): Trace the service method EXACTLY in `imported_code`. You MUST COUNT the parameters. If `service.getJobs` takes 4 parameters, DO NOT call it with 7. Match types and order perfectly.
+11. FORBIDDEN: NEVER use PowerMock (`whenNew`, `@PrepareForTest`). Use only Mockito. If you can't mock it with Mockito, skip it.
+12. MULTIPART FILE RULE: Always mock `MultipartFile` and handle the `IOException` from `getBytes()` or `getInputStream()` by adding `throws Exception` to the test method.
+13. PARAMETER MATCHING: Use exact types for matchers. If a method takes `String`, use `anyString()`. If it takes `int`, use `anyInt()`. Avoid bare `any()` if it causes ambiguity.
+14. NO METHOD HALLUCINATION (CRITICAL): NEVER invent methods on service classes that do not exist in the provided `imported_code`. 
+   - EXAMPLE: `JobService` does NOT have `getJobs()`. In `JobServiceController`, the `getJobs` endpoint uses `mongoTemplate.find()` directly. You MUST mock `mongoTemplate.find()` instead of imagining `jobService.getJobs()`.
+OUTPUT:
+- EXACTLY one Java test class
+- Name: <ControllerClassName>Test
+- Correct package
+- No comments or explanations
+
+ABSOLUTE MODEL RULES:
+- **JobSummary Rule**: JobSummary ONLY has a parameterized constructor: `new JobSummary(PadInfo padInfo)`. NEVER use no-args constructor for JobSummary.
+- **SyncRequest Rule**: SyncRequest fields `remove` and `get` are `Set<String>`. Use `Set.of(...)` or `new HashSet<>(Arrays.asList(...))` or `Collections.singleton(...)` ONLY for ONE element. NEVER pass multiple arguments to `Collections.singleton()`.
+- **COLLECTION INITIALIZATION (CRITICAL)**: `Collections.singleton(X)` takes EXACTLY ONE argument. If you have multiple items, use `Set.of(item1, item2)` or `new HashSet<>(Arrays.asList(item1, item2))`.
+
+INPUT:
+## AVAILABLE CLASSES & METHODS (MUST ADHERE TO THESE)
+
+CLASS: JobCompletionDashboardController
+  - PUBLIC METHODS: JobDashboardWellInfo getWellCompletionReport(HttpServletRequest request, String jobId, String wellId), JobDashboardWellInfo getJobCompletionDashBoardInfo(HttpServletRequest request, JobDashboardWellInfo jobDashboardWellInfo)
+
+❌ CRITICAL: NEVER use or mock methods not listed above. If a method is not listed, it DOES NOT EXIST.
+
+
+// ===== Imported from: com.carbo.job.services.JobCompletionDashboardService =====
+package com.carbo.job.services;
+
+import com.carbo.job.model.*;
+import com.carbo.job.model.proposal.BasicInformation;
+import com.carbo.job.model.proposal.Proposal;
+import com.carbo.job.model.proposal.Well;
+import com.carbo.job.repository.*;
+import com.carbo.job.utils.ControllerUtil;
+
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+
+import static com.carbo.job.utils.CommonUtils.round;
+import static com.carbo.job.utils.ControllerUtil.getOrganizationId;
+
+@Service
+public class JobCompletionDashboardService {
+
+    @Autowired
+    JobMongoDbRepository jobMongoDbRepository;
+
+    @Autowired
+    WellMongoDbRepository wellMongoDbRepository;
+
+    @Autowired
+    ActivityLogMongoDbRepository activityLogMongoDbRepository;
+
+    @Autowired
+    private ProposalMongoDbRepository proposalMongoDbRepository;
+
+    @Autowired
+    private BasicInformationMongoDbRepository basicInformationMongoDbRepository;
+
+    @Autowired
+    private ProposalWellMongoDbRepository proposalWellMongoDbRepository;
+
+    @Autowired
+    private JobDashboardWellInfoRepository jobDashboardWellInfoRepository;
+
+    @Autowired
+    private MongoTemplate mongoTemplate;
+
+    // ───────────────────────────────────────────────────────────────────────────────
+    //                              SECURITY & UTIL
+    // ───────────────────────────────────────────────────────────────────────────────
+
+    private Optional<Job> getJobById(HttpServletRequest request, String jobId) {
+        String userOrgId = getOrganizationId(request);
+        String orgType = "OPERATOR";
+
+        try {
+            orgType = ControllerUtil.getOrganizationType(request);
+        } catch (Exception e) {
+            // Token might be missing organizationType, ignore safely
+        }
+
+        if ("OPERATOR".equalsIgnoreCase(orgType)) {
+            return jobMongoDbRepository.findByIdAndSharedWithOrganizationId(jobId, userOrgId);
+        } else {
+            return jobMongoDbRepository.findByIdAndOrganizationId(jobId, userOrgId);
+        }
+    }
+
+    private String safeString(String v) {
+        return v == null ? "" : v;
+    }
+
+    // ───────────────────────────────────────────────────────────────────────────────
+    //                              MAIN METHODS
+    // ───────────────────────────────────────────────────────────────────────────────
+
+    public JobDashboardWellInfo getWellCompletionReport(
+            HttpServletRequest request,
+            String jobId,
+            String wellId
+    ) {
+        // 1. DATABASE CALL: Mandatory for Security & Context
+        Optional<Job> jobOptional = getJobById(request, jobId);
+
+        if (jobOptional.isEmpty()) {
+            // Access Denied or Job Not Found -> Return empty object (Blank PDF, no crash)
+            return new JobDashboardWellInfo();
+        }
+        Job job = jobOptional.get();
+
+        // 2. CONTEXT SWITCH: Use the Job Owner's ID (ProFrac), not the User's ID (SM Energy)
+        String organizationId = job.getOrganizationId();
+
+        Optional<JobDashboardWellInfo> jobDashboardWellInfo = jobDashboardWellInfoRepository.findByOrganizationIdAndJobIdAndWellId(organizationId, jobId, wellId);
+        JobDashboardWellInfo res = new JobDashboardWellInfo();
+
+        com.carbo.job.model.Well well = wellMongoDbRepository.findByOrganizationIdAndId(organizationId, wellId);
+        if (ObjectUtils.isEmpty(well)){
+            return res;
+        }
+
+        List<ActivityLogEntry> activityLogEntries =
+                activityLogMongoDbRepository
+                        .findByOrganizationIdAndJobIdAndWell(
+                                organizationId,
+                                jobId,
+                                safeString(well.getName())
+                        );
+
+        // ---- Fetch Proposal ----
+        Query proposalQuery = new Query();
+        proposalQuery.addCriteria(Criteria.where("jobId").is(jobId));
+        Proposal proposal = mongoTemplate.findOne(proposalQuery, Proposal.class, "proposal-v2");
+
+        // ---- Well Basic Info ----
+        res.setWellName(safeString(well.getName()));
+        res.setWellId(well.getId());
+        res.setApi(safeString(well.getApi()));
+        res.setAfe(safeString(well.getAfeNumber()));
+        res.setWellType(safeString(well.getWellType()));
+
+        // ---- Proposal Extras ----
+        if (proposal != null) {
+
+            BasicInformation basicInfo =
+                    basicInformationMongoDbRepository.findByProposalIdAndOrganizationId(
+                            safeString(proposal.getId()), organizationId);
+
+            Well proposalWell =
+                    proposalWellMongoDbRepository.findByProposalIdAndOrganizationId(
+                            safeString(proposal.getId()), organizationId
+                    );
+
+            if (basicInfo != null && basicInfo.getRpfInformation() != null) {
+                res.setFormation(safeString(basicInfo.getRpfInformation().getFormation()));
+            } else {
+                res.setFormation("");
+            }
+
+            if (proposalWell != null && proposalWell.getHhpCalculations() != null) {
+                res.setBhst(proposalWell.getHhpCalculations().getBottomHoleTemp());
+                res.setMaxPressure(proposalWell.getHhpCalculations().getMaxPressure());
+                res.setMaxTvd(proposalWell.getHhpCalculations().getTVD());
+            } else {
+                res.setBhst(0.0);
+                res.setMaxPressure(0.0);
+                res.setMaxTvd(0.0);
+            }
+
+        } else {
+            // no proposal available
+            res.setFormation("");
+            res.setBhst(0.0);
+            res.setMaxPressure(0.0);
+            res.setMaxTvd(0.0);
+        }
+
+        res.setMainFluidType("Main Fluid");
+
+        // ---- Proppants ----
+        List<String> proppantTypes = new ArrayList<>();
+        double designProppantLbs = 0.0;
+
+        Optional<com.carbo.job.model.Well> wellFromJob = job.getWells() != null
+                ? job.getWells().stream()
+                .filter(w -> safeString(w.getId()).equalsIgnoreCase(well.getId()))
+                .findFirst()
+                : Optional.empty();
+
+        if (wellFromJob.isPresent()) {
+            com.carbo.job.model.Well w = wellFromJob.get();
+            if (w.getProppants() != null) {
+                proppantTypes = w.getProppants().stream()
+                        .map(p -> safeString(p.getName()))
+                        .filter(s -> !s.isEmpty())
+                        .distinct()
+                        .toList();
+
+                designProppantLbs = w.getProppants().stream()
+                        .mapToDouble(p -> p.getVolumePerStage() != null ? p.getVolumePerStage() : 0f)
+                        .sum();
+            }
+        }
+        res.setProppantTypes(proppantTypes);
+        res.setDesignProppantLbs(designProppantLbs);
+        res.setCreated(System.currentTimeMillis());
+        res.setJobId(jobId);
+        res.setOrganizationId(organizationId);
+
+        // ---- Chemicals ----
+        res.setDesignFluidBbls(wellFromJob.map(this::calculateTotalChemicalVolume).orElse(0.0));
+
+        // ---- Pump Hours ----
+        res.setTotalPumpTimeHrs(round(calculateTotalPumpHours(activityLogEntries),2));
+
+        if (jobDashboardWellInfo.isPresent()) {
+            JobDashboardWellInfo dashboardWellInfo = jobDashboardWellInfo.get();
+            res.setId(dashboardWellInfo.getId());
+            res.setFormation(dashboardWellInfo.getFormation());
+            res.setBhst(dashboardWellInfo.getBhst());
+            res.setWellType(dashboardWellInfo.getWellType());
+            res.setCompletionType(dashboardWellInfo.getCompletionType());
+            res.setMaxPressure(dashboardWellInfo.getMaxPressure());
+            res.setMaxTvd(dashboardWellInfo.getMaxTvd());
+            res.setMainFluidType(dashboardWellInfo.getMainFluidType());
+        }
+
+        jobDashboardWellInfoRepository.save(res);
+        return res;
+    }
+
+    public double calculateTotalChemicalVolume(com.carbo.job.model.Well well) {
+        if (well == null) return 0.0;
+        double total = 0.0;
+        total += sumWellLevelChemicals(well.getAcidAdditives());
+        total += sumWellLevelChemicals(well.getSlickwaters());
+        total += sumWellLevelChemicals(well.getLinearGelCrosslinks());
+        total += sumWellLevelChemicals(well.getDiverters());
+        if (well.getAdditionalChemicalTypes() != null) {
+            for (List<Chemical> list : well.getAdditionalChemicalTypes().values()) {
+                total += sumWellLevelChemicals(list);
+            }
+        }
+        return total;
+    }
+
+    private double sumWellLevelChemicals(List<Chemical> list) {
+        if (list == null) return 0.0;
+        return list.stream()
+                .filter(c -> c != null && c.getVolumePerStage() != null)
+                .mapToDouble(Chemical::getVolumePerStage)
+                .sum();
+    }
+
+    private double calculateTotalPumpHours(List<ActivityLogEntry> activityLogEntries) {
+        if (activityLogEntries == null || activityLogEntries.isEmpty()) {
+            return 0.0;
+        }
+        long totalPumpMs = activityLogEntries.stream()
+                .filter(l -> l.getEventOrNptCode() != null && l.getEventOrNptCode().equalsIgnoreCase("Pump Time"))
+                .mapToLong(ActivityLogEntry::getMillisecondsSpan)
+                .sum();
+        return totalPumpMs / (1000.0 * 60 * 60);
+    }
+
+    public JobDashboardWellInfo saveWellInfo(HttpServletRequest request, JobDashboardWellInfo jobDashboardWellInfo) {
+        // 1. Secure Check
+        Optional<Job> jobOptional = getJobById(request, jobDashboardWellInfo.getJobId());
+        if (jobOptional.isEmpty()) {
+            return null; // Access Denied
+        }
+        Job job = jobOptional.get();
+
+        // 2. ID Swap (Save to Owner's Record)
+        String organizationId = job.getOrganizationId();
+
+        Optional<JobDashboardWellInfo> existing = jobDashboardWellInfoRepository.findByOrganizationIdAndJobIdAndWellId(
+                organizationId,
+                jobDashboardWellInfo.getJobId(), jobDashboardWellInfo.getWellId()
+        );
+
+        if (existing.isPresent()) {
+            jobDashboardWellInfo.setId(existing.get().getId());
+            jobDashboardWellInfo.setModified(new Date().getTime());
+        } else {
+            jobDashboardWellInfo.setCreated(new Date().getTime());
+            jobDashboardWellInfo.setModified(new Date().getTime());
+        }
+
+        jobDashboardWellInfo.setOrganizationId(organizationId);
+        return jobDashboardWellInfoRepository.save(jobDashboardWellInfo);
+    }
+}
+// ===== Imported from: com.carbo.job.model.JobDashboardWellInfo =====
+package com.carbo.job.model;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
+
+import java.util.List;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Document(collection = "job-dashboard-well-information")
+@CompoundIndex(name = "jobId_organizationId_wellId_idx", def = "{'jobId': 1, 'organizationId': 1, 'wellId': 1}", unique = true)
+public class JobDashboardWellInfo {
+
+    @Id
+    private String id;
+
+    @Field("wellId")
+    private String wellId;
+
+    @Field("wellName")
+    private String wellName;
+
+    @Field("api")
+    private String api;
+
+    @Field("afe")
+    private String afe;
+
+    @Field("formation")
+    private String formation;
+
+    @Field("bhst")
+    private Double bhst;
+
+    @Field("wellType")
+    private String wellType;
+
+    @Field("completionType")
+    private String completionType;
+
+    @Field("stageIntervals")
+    private Integer stageIntervals;
+
+    @Field("maxPressure")
+    private Double maxPressure;
+
+    @Field("maxTvd")
+    private Double maxTvd;
+
+    @Field("mainFluidType")
+    private String mainFluidType;
+
+    @Field("proppantTypes")
+    private List<String> proppantTypes;
+
+    @Field("designFluidBbls")
+    private Double designFluidBbls;
+
+    @Field("designProppantLbs")
+    private Double designProppantLbs;
+
+    @Field("totalPumpTimeHrs")
+    private Double totalPumpTimeHrs;
+
+    @Field("jobId")
+    private String jobId;
+
+    @Field("organizationId")
+    private String organizationId;
+
+    @Field("modified")
+    private Long modified;
+
+    @Field("created")
+    private Long created;
+
+}
+// Unresolved import (framework/JDK): org.springframework.beans.factory.annotation.Autowired
+// Unresolved import (framework/JDK): jakarta.servlet.http.HttpServletRequest
+// Unresolved import (framework/JDK): org.springframework.web.bind.annotation.*
+
+// ===== Current file: src/main/java/com/carbo/job/controllers/JobCompletionDashboardController.java =====
+package com.carbo.job.controllers;
+
+import com.carbo.job.model.JobDashboardWellInfo;
+import com.carbo.job.services.JobCompletionDashboardService;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/v1/job-complete-dashboard")
+public class JobCompletionDashboardController {
+
+    @Autowired
+    JobCompletionDashboardService jobCompletionDashboardService;
+
+    @RequestMapping(value = "/well-completion-report", method = RequestMethod.GET)
+    public JobDashboardWellInfo getWellCompletionReport(HttpServletRequest request,
+                                                        @RequestParam(name = "jobId", required = true) String jobId,
+                                                        @RequestParam(name= "wellId", required = true) String wellId){
+
+        // The Controller just passes the raw ID.
+        // The Service MUST perform the database lookup to verify access and get the organization ID.
+        return jobCompletionDashboardService.getWellCompletionReport(request, jobId, wellId);
+    }
+
+    @PostMapping(value = "/submit-well-data")
+    public JobDashboardWellInfo getJobCompletionDashBoardInfo(HttpServletRequest request,
+                                                              @RequestBody JobDashboardWellInfo jobDashboardWellInfo) {
+        return jobCompletionDashboardService.saveWellInfo(request, jobDashboardWellInfo);
+    }
+}
+
+

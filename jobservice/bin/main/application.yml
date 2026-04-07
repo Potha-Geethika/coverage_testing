@@ -1,0 +1,64 @@
+spring:
+  cloud:
+    stream:
+      bindings:
+        output:
+          destination:  emailSendTopic
+          content-type: application/json
+        wellChangeTopic:
+          destination:  wellChangeTopic
+          content-type: application/json
+          group: jobGroup
+        padTimezoneChangeTopic:
+          destination: padTimezoneChangeTopic
+          content-type: application/json
+          group: jobGroup
+      kafka:
+        binder:
+          zkNodes: kafkaserver
+          brokers: kafkaserver
+  mvc:
+    async:
+      request-timeout: 85000
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+server:
+  port: 8085
+  shutdown: graceful
+  # Enable response compression
+  compression:
+    enabled: true
+    # The comma-separated list of mime types that should be compressed
+    mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
+    # Compress the response only if the response size is at least 100KB
+    min-response-size: 102400
+  http2:
+    enabled: true
+
+security:
+  oauth2:
+    resource:
+      userInfoUri: ${AUTHSERVER_URI}
+
+
+
+#Setting the logging levels for the service
+logging:
+  level:
+    com.netflix: WARN
+    org.springframework.web: WARN
+    com.carbo: DEBUG
+
+hystrix:
+  command:
+    default:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 20000
+
+
+upload:
+  location: /tmp/shared      
+

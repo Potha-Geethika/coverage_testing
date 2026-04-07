@@ -1,0 +1,118 @@
+signing:
+  key: 345345fsdfsf5345
+carbo:
+  fracproop:
+    service:
+      baseurl: https://ops-ak8-test.fracpro.ai/
+config:
+  oauth2:
+    accessTokenUri: https://ops-ak8-test.fracpro.ai/api/auth/auth/oauth/token
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://prodlinqx.b2clogin.com/ac169be0-16a7-4fe4-9033-dba639b5eb1a/v2.0/
+          jwk-set-uri: https://prodlinqx.b2clogin.com/prodlinqx.onmicrosoft.com/B2C_1_PROD/discovery/v2.0/keys
+  cloud:
+    function:
+      definition: priceBookComponentChangeTopic;wellChangeTopic;padTimezoneChangeTopic
+    config:
+      enabled: false
+    stream:
+      bindings:
+        priceBookComponentChangeTopic-in-0:
+          destination: priceBookComponentChange
+          group: job-service-pricebook
+          content-type: application/json
+
+        wellChangeTopic-in-0:
+          destination: wellChangeTopic
+          group: job-service-well
+          content-type: application/json
+
+        padTimezoneChangeTopic-in-0:
+          destination: padTimezoneChangeTopic
+          group: job-service-pad
+          content-type: application/json
+
+      kafka:
+        binder:
+          zkNodes: kafkaserver
+          brokers: kafkaserver
+          consumer-properties:
+            spring.json.trusted.packages: "*"
+            auto.offset.reset: earliest
+
+  codec:
+    max-in-memory-size: 20MB
+server:
+  error:
+    include-message: always
+  port: ${SERVER_PORT}
+  shutdown: graceful
+
+security:
+  oauth2:
+    resource:
+      userInfoUri: ${AUTHSERVER_URI}
+
+eureka:
+  instance:
+    preferIpAddress: true
+  client:
+    registerWithEureka: true
+    fetchRegistry: true
+    serviceUrl:
+      defaultZone: ${EUREKASERVER_URI}
+
+#Setting the logging levels for the service
+logging:
+  level:
+    org.springframework.cloud.stream: DEBUG
+    org.springframework.cloud.stream.binding: TRACE
+    org.springframework.cloud.stream.binder.kafka: DEBUG
+    org.springframework.kafka: DEBUG
+    com.netflix: WARN
+    org.springframework.web: WARN
+    com.carbo: DEBUG
+    com.carbo.job.events: TRACE
+
+hystrix:
+  command:
+    default:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 20000
+
+upload:
+  location: /tmp/shared
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    config-url: /api/job/v3/api-docs/swagger-config
+    url: /api/job/v3/api-docs/job-service-api
+
+azure:
+  blob:
+    storage:
+      sas-token: "sp=racwdli&st=2024-05-24T20:38:43Z&se=2024-12-31T04:38:43Z&sv=2022-11-02&sr=c&sig=dNratNARX%2BnORTVY1ozGcNJyfXIPvU%2FEqJNSzN7j1j0%3D"
+      sas-token-pjr: "sp=racwdli&st=2024-04-04T07:22:31Z&se=2028-08-02T15:22:31Z&sip=0.0.0.0-255.255.255.255&sv=2022-11-02&sr=c&sig=Af3GZMC7iA%2Bir4B%2FmDvWGVDkaVkwXkLqbZfjIzzoOvE%3D"
+      sas-token-on-site-equipment: "sp=racwdli&st=2024-04-04T07:16:49Z&se=2028-04-01T15:16:49Z&sip=0.0.0.0-255.255.255.255&sv=2022-11-02&sr=c&sig=K8QGlY%2BCz%2BHbJGPly7Ymf1vnfC2iH5%2FwKh90BfZMS3U%3D"
+      blob-url: "https://uatemailattachments.blob.core.windows.net/miscattachments"
+      base-container-name: "miscattachments"
+      container-name-onsite: "onsiteattachments"
+      container-name-pjr: "pjrattachments"

@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: jobservice
+#  profiles:
+#    active:
+#      default
+  cloud:
+    config:
+      enabled: false
+    inetutils:
+      ignored-interfaces:
+        - en1

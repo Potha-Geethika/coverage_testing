@@ -1,0 +1,17 @@
+package com.carbo.job.model.proposal.v2;
+
+public enum ProposalActionEnum {
+    SAVE_DRAFT,
+    REVIEW_BY_MANAGEMENT,
+    APPROVE_BY_MANAGEMENT,
+    REJECT_BY_MANAGEMENT,
+    REVIEW_BY_CLIENT,
+    APPROVE_BY_CLIENT,
+    REJECT_BY_CLIENT,
+    CLOSED_BY_CLIENT,
+    REVISE_PROPOSAL,
+    SCHEDULE,
+    JOB_SCHEDULED,
+    OPERATE,
+    STATUS_CHANGE_BY_SUPER_SALES_USER
+}
