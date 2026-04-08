@@ -1,0 +1,28 @@
+spring:
+  cloud:
+    stream:
+      bindings:
+        output:
+          destination: padTimezoneChangeTopic
+          content-type: application/json
+      kafka:
+        binder:
+          zkNodes: kafkaserver
+          brokers: kafkaserver
+
+server:
+  port: 9083
+
+security:
+  oauth2:
+    resource:
+      userInfoUri: ${AUTHSERVER_URI}
+
+
+
+#Setting the logging levels for the service
+logging:
+  level:
+    com.netflix: WARN
+    org.springframework.web: WARN
+    com.carbo: DEBUG
