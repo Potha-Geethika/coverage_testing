@@ -1,9 +1,9 @@
 spring:
   application:
     name: padservice
-  profiles:
-    active:
-      default
+#  profiles:
+#    active:
+#      default
   cloud:
     config:
-      enabled: true
+      enabled: false
